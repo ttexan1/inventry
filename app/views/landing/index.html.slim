@@ -1,0 +1,65 @@
+h2 style="text-align: center;"
+  | 音声認識
+  div style="margin: 0px 47%;"
+    button id="start_btn" style="text-align: center; height: 50px; width: 100px;"
+      | start
+  div style="margin: 0px 47%;"
+    button id="stop_btn" style="text-align: center; height: 50px; width: 100px;"
+      | stop
+div id="content" style="text-align: center;"
+- @categories.each do |c|
+  p = c.name
+  table
+    - c.products.each do |product|
+      tr
+        td
+          = product.name
+          |:
+        td
+          | 残り
+          = product.quantity
+          | 単位
+= simple_form_for @audio_text do |f|
+  = f.text_field :memo
+          
+javascript:
+  const speech = new webkitSpeechRecognition();
+  speech.lang = 'ja-JP';
+
+  const start_btn = document.getElementById('start_btn');
+  const stop_btn = document.getElementById('stop_btn');
+  const content = document.getElementById('content');
+  let isFinised = false;
+
+  $("#start_btn").on('click', function () {
+    speech.start();
+  });
+
+  //音声自動文字起こし機能
+  speech.onresult = function (e) {
+    speech.stop();
+    if (e.results[0].isFinal) {
+      var autotext = e.results[0][0].transcript
+      content.innerHTML += '<div>' + autotext + '</div>';
+    }
+  }
+
+  speech.onend = () => {
+    if (!isFinised) {
+      speech.start()
+    }
+  };
+
+  // 音声認識をストップ
+  stop_btn.addEventListener('click', function () {
+    isFinised = true
+    speech.stop();
+    setTimeout(sendForm, 2000)
+  });
+
+  function sendForm() {
+    text = $('#content').html()
+    console.log(text);
+    $('input#audio_text_memo').val(text)
+    form = $('form#new_audio_text').submit()
+  }
